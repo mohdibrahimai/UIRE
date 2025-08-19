@@ -9,14 +9,45 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      # Let pytest import your package without installing it
+      PYTHONPATH: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
       - name: Install dependencies
         run: |
-          pip install fastapi uvicorn pydantic pytest
+          # Prefer a dev requirements file if you add one
+          if [ -f requirements-dev.txt ]; then
+            pip install -r requirements-dev.txt
+          elif [ -f requirements.txt ]; then
+            # Make sure httpx + pytest are present even if requirements.txt is minimal
+            pip install -r requirements.txt httpx pytest
+          else
+            # Fallback: install everything inline
+            pip install fastapi uvicorn pydantic pytest httpx
+          fi
+
+      - name: Generate bench data (optional)
+        run: |
+          python - <<'PY'
+          import json, pathlib, random
+          p = pathlib.Path("uire/data"); p.mkdir(parents=True, exist_ok=True)
+          with open(p/"uire_bench.jsonl", "w") as f:
+              for i in range(20):
+                  f.write(json.dumps({
+                      "q": f"test query {i}",
+                      "domain": random.choice(["search","recommend","translate"])
+                  })+"\n")
+          PY
+
       - name: Run tests
         run: pytest -q
