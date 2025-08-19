@@ -10,7 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      # Let pytest import your package without installing it
       PYTHONPATH: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
@@ -24,15 +23,15 @@ jobs:
         run: python -m pip install --upgrade pip
 
       - name: Install dependencies
+        shell: bash
         run: |
-          # Prefer a dev requirements file if you add one
           if [ -f requirements-dev.txt ]; then
             pip install -r requirements-dev.txt
           elif [ -f requirements.txt ]; then
-            # Make sure httpx + pytest are present even if requirements.txt is minimal
+            # Ensure test and client deps even if requirements.txt is minimal
             pip install -r requirements.txt httpx pytest
           else
-            # Fallback: install everything inline
+            # Fallback: install essentials inline
             pip install fastapi uvicorn pydantic pytest httpx
           fi
 
@@ -48,6 +47,10 @@ jobs:
                       "domain": random.choice(["search","recommend","translate"])
                   })+"\n")
           PY
+
+      - name: Run tests
+        run: pytest -q
+
 
       - name: Run tests
         run: pytest -q
