@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  uire:
+    build: .
+    environment:
+      - UIRE_DB=/data/preferences.db
+      - UIRE_LOG=/data/events.jsonl
+      - UIRE_SALT=uirerocks
+    volumes:
+      - ./data:/data
+    ports:
+      - "8000:8000"

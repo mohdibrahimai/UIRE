@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "uire.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "uire.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "uire.name" . }}
+    spec:
+      containers:
+        - name: uire
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8000
+          env:
+            - name: UIRE_DB
+              value: "/data/preferences.db"
+            - name: UIRE_LOG
+              value: "/data/events.jsonl"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
